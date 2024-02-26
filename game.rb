@@ -175,8 +175,10 @@ class Player
   end
 
   def draw
-    Gosu.draw_rect(@x, @y, @width, @height, Gosu::Color::BLUE)
+    player_image = Gosu::Image.new('img/cartoonship_blue.png')
+    player_image.draw(@x-10, @y, 1, 0.1,0.1)  
   end
+  
 
   def shoot(projectiles)
     dx = 1  # Adjust as needed
@@ -215,7 +217,8 @@ class Boss
   end
 
   def draw
-    Gosu.draw_rect(@x, @y, @width, @height, Gosu::Color::RED)
+    player_image = Gosu::Image.new('img/boss_spaceship.png')
+    player_image.draw(@x-50, @y, 1, 0.3,0.3) 
   end
 
   def reset
@@ -267,3 +270,5 @@ end
 
 window = GameWindow.new
 window.show
+
+
