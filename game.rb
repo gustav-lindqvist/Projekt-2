@@ -24,8 +24,10 @@ class GameWindow < Gosu::Window
     update_projectiles
     check_player_collision
 
+    @player.shoot(@projectiles) if Gosu.button_down?(Gosu::KB_SPACE) && @projectile_cooldown.zero?
+    @boss.shoot(@projectiles) if @boss.can_shoot?
+
     if @projectile_cooldown.zero?
-      shoot_projectile(@boss.x, @boss.y + @boss.height / 2, @player.x + @player.width / 2, @player.y + @player.height / 2)
       @projectile_cooldown = 60
     else
       @projectile_cooldown -= 1
@@ -104,22 +106,12 @@ class GameWindow < Gosu::Window
   def restart_game
     @game_over = false
     @player.reset_game
+    @boss.reset
   end
 
   def update_projectiles
     @projectiles.each(&:move)
     @projectiles.reject! { |projectile| projectile.x > self.width }
-  end
-
-  def shoot_projectile(start_x, start_y, target_x, target_y)
-    dx = target_x - start_x
-    dy = target_y - start_y
-    magnitude = Math.sqrt(dx**2 + dy**2)
-    normalized_dx = dx / magnitude
-    normalized_dy = dy / magnitude
-
-    projectile = Projectile.new(start_x, start_y, normalized_dx, normalized_dy)
-    @projectiles.push(projectile)
   end
 
   def check_player_collision
@@ -168,6 +160,13 @@ class Player
     Gosu.draw_rect(@x, @y, @width, @height, Gosu::Color::BLUE)
   end
 
+  def shoot(projectiles)
+    dx = 1  # Adjust as needed
+    dy = 0  # Adjust as needed
+    projectile = Projectile.new(@x + @width, @y + @height / 2, dx, dy)
+    projectiles.push(projectile)
+  end
+
   def take_damage
     @hp -= 10
   end
@@ -209,7 +208,11 @@ class Boss
     @cooldown.zero?
   end
 
-  def shoot
+  def shoot(projectiles)
+    dx = -1  # Adjust as needed
+    dy = 0  # Adjust as needed
+    projectile = Projectile.new(@x, @y + @height / 2, dx, dy)
+    projectiles.push(projectile)
     @cooldown = 60
   end
 end
