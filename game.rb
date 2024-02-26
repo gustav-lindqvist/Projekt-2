@@ -23,6 +23,7 @@ class GameWindow < Gosu::Window
     @boss.move
     update_projectiles
     check_player_collision
+    check_boss_collision
 
     @player.shoot(@projectiles) if Gosu.button_down?(Gosu::KB_SPACE) && @projectile_cooldown.zero?
     @boss.shoot(@projectiles) if @boss.can_shoot?
@@ -130,8 +131,25 @@ class GameWindow < Gosu::Window
     end
   end
 
+  def check_boss_collision
+    return if @game_over
+
+    @projectiles.each do |projectile|
+      if (
+        @boss.x < projectile.x + projectile.width &&
+        @boss.x + @boss.width > projectile.x &&
+        @boss.y < projectile.y + projectile.height &&
+        @boss.y + @boss.height > projectile.y &&
+        projectile.source == :player  # Check if the projectile is from the player
+      )
+        @boss.take_damage
+        @projectiles.delete(projectile)
+      end
+    end
+  end
+
   def check_game_over
-    if @player.hp <= 0
+    if @player.hp <= 0 || @boss.hp <= 0
       @game_over = true
     end
   end
@@ -163,7 +181,7 @@ class Player
   def shoot(projectiles)
     dx = 1  # Adjust as needed
     dy = 0  # Adjust as needed
-    projectile = Projectile.new(@x + @width, @y + @height / 2, dx, dy)
+    projectile = Projectile.new(@x + @width, @y + @height / 2, dx, dy, :player)  # Pass :player as the source
     projectiles.push(projectile)
   end
 
@@ -178,7 +196,7 @@ class Player
 end
 
 class Boss
-  attr_reader :x, :y, :width, :height, :speed
+  attr_reader :x, :y, :width, :height, :speed, :hp
 
   def initialize
     @x = 700
@@ -187,6 +205,7 @@ class Boss
     @height = 80
     @speed = 2
     @cooldown = 0
+    @hp = 200
   end
 
   def move
@@ -202,6 +221,7 @@ class Boss
   def reset
     @y = 300
     @cooldown = 0
+    @hp = 200
   end
 
   def can_shoot?
@@ -211,16 +231,20 @@ class Boss
   def shoot(projectiles)
     dx = -1  # Adjust as needed
     dy = 0  # Adjust as needed
-    projectile = Projectile.new(@x, @y + @height / 2, dx, dy)
+    projectile = Projectile.new(@x, @y + @height / 2, dx, dy, :boss)  # Pass :boss as the source
     projectiles.push(projectile)
     @cooldown = 60
+  end
+
+  def take_damage
+    @hp -= 10
   end
 end
 
 class Projectile
-  attr_reader :x, :y, :width, :height, :speed, :dx, :dy
+  attr_reader :x, :y, :width, :height, :speed, :dx, :dy, :source
 
-  def initialize(start_x, start_y, dx, dy)
+  def initialize(start_x, start_y, dx, dy, source)
     @x = start_x
     @y = start_y
     @width = 20
@@ -228,6 +252,7 @@ class Projectile
     @speed = 8
     @dx = dx
     @dy = dy
+    @source = source  # Store the source of the projectile
   end
 
   def move
